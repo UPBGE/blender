@@ -87,6 +87,16 @@ if(WITH_GAMEENGINE_SECURITY)
   add_definitions(-DWITH_GAMEENGINE_SECURITY)
 endif()
 
+if(WITH_GAMEENGINE_CEGUI)
+  list(APPEND INC_SYS
+    ${CEGUI_INCLUDE_DIR}
+  )
+  list(APPEND LIB
+    ${CEGUI_LIBRARIES}
+  )
+  add_definitions(-DWITH_GAMEENGINE_CEGUI)
+endif()
+
 if(WITH_PLAYER)
     list(APPEND LIB
       ge_player

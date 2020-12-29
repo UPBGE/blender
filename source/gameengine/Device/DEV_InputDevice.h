@@ -31,12 +31,19 @@
 
 #include "SCA_IInputDevice.h"
 
+#ifdef WITH_GAMEENGINE_CEGUI
+#include <CEGUI/CEGUI.h>
+#endif
+
 class DEV_InputDevice : public SCA_IInputDevice {
  protected:
   /// These maps converts GHOST input number to SCA input enum.
   std::map<int, SCA_EnumInputs> m_reverseKeyTranslateTable;
   std::map<int, SCA_EnumInputs> m_reverseButtonTranslateTable;
   std::map<int, SCA_EnumInputs> m_reverseWindowTranslateTable;
+#ifdef WITH_GAMEENGINE_CEGUI
+  std::map<int, unsigned int> m_ceguiReverseKeyTranslateTable;
+#endif
 
  public:
   DEV_InputDevice();
@@ -48,5 +55,6 @@ class DEV_InputDevice : public SCA_IInputDevice {
   void ConvertMoveEvent(int x, int y);
   void ConvertWheelEvent(int z);
   void ConvertEvent(SCA_IInputDevice::SCA_EnumInputs type, int val, unsigned int unicode);
+  void ConvertEvent(unsigned int type, int val, unsigned int unicode);
 };
 

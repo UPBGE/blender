@@ -33,6 +33,8 @@
 #include "BKE_layer.h"
 #include "BKE_main.h"
 #include "BKE_sound.h"
+#include "BLI_path_util.h"
+#include "BLI_string.h"
 #include "DNA_scene_types.h"
 #include "wm_event_types.h"
 
@@ -55,6 +57,11 @@
 #ifdef WITH_PYTHON
 #  include "Texture.h"  // For FreeAllTextures.
 #endif                  // WITH_PYTHON
+
+#ifdef WITH_GAMEENGINE_CEGUI
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
+#endif
 
 LA_Launcher::LA_Launcher(GHOST_ISystem *system,
                          Main *maggie,
@@ -118,6 +125,21 @@ const std::string &LA_Launcher::GetExitString()
 {
   return m_exitString;
 }
+
+#ifdef WITH_GAMEENGINE_CEGUI
+static void addCEGUIResourceGroup(CEGUI::DefaultResourceProvider *rp,
+                           char *pathname,
+                           char *relative_path,
+                           char *group)
+{
+  char resource_path[FILE_MAXDIR + FILE_MAXFILE];
+
+  BLI_strncpy(resource_path, relative_path, sizeof(resource_path));
+  BLI_path_abs(resource_path, pathname);
+  std::cout << "GUI: Added " << resource_path << " path for group '" << group << "'" << std::endl;
+  rp->setResourceGroupDirectory(group, resource_path);
+};
+#endif
 
 void LA_Launcher::InitEngine()
 {
@@ -255,6 +277,56 @@ void LA_Launcher::InitEngine()
   }
 #endif  // WITH_AUDASPACE
 
+   // Create GUI subsystem
+#ifdef WITH_GAMEENGINE_CEGUI
+  CEGUI::OpenGL3Renderer &renderer = CEGUI::OpenGL3Renderer::create();
+  CEGUI::System::create(renderer);
+  // static_cast<CEGUI::OpenGL3Renderer *>(renderer)->enableExtraStateSettings(true); // clear
+  // state before every frame rendering
+
+  // initialise the required dirs for the DefaultResourceProvider
+  CEGUI::DefaultResourceProvider *rp = static_cast<CEGUI::DefaultResourceProvider *>(
+      CEGUI::System::getSingleton().getResourceProvider());
+
+  // for each resource type, set a resource group directory
+  rp->setResourceGroupDirectory("schemes", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\schemes\\");
+  rp->setResourceGroupDirectory("imagesets", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\imagesets\\");
+  rp->setResourceGroupDirectory("fonts", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\fonts\\");
+  rp->setResourceGroupDirectory("layouts", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\layouts\\");
+  rp->setResourceGroupDirectory("looknfeels", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\looknfeel\\");
+  rp->setResourceGroupDirectory("scripts", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\scripts\\");
+  rp->setResourceGroupDirectory("animations", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\animations\\");
+  // This is only really needed if you are using Xerces and need to
+  // specify the schemas location
+  rp->setResourceGroupDirectory("schemas", "E:\\Development\\CEGUI\\cegui-0.8.7\\datafiles\\xml_schemas\\");
+
+  // set the default resource groups to be used
+  CEGUI::ImageManager::setImagesetDefaultResourceGroup("imagesets");
+  CEGUI::Font::setDefaultResourceGroup("fonts");
+  CEGUI::Scheme::setDefaultResourceGroup("schemes");
+  CEGUI::WidgetLookManager::setDefaultResourceGroup("looknfeels");
+  CEGUI::WindowManager::setDefaultResourceGroup("layouts");
+  CEGUI::ScriptModule::setDefaultResourceGroup("scripts");
+  CEGUI::AnimationManager::setDefaultResourceGroup("animations");
+
+  // setup default group for validation schemas
+  CEGUI::XMLParser *parser = CEGUI::System::getSingleton().getXMLParser();
+  if (parser->isPropertyPresent("SchemaDefaultResourceGroup")) {
+    parser->setProperty("SchemaDefaultResourceGroup", "schemas");
+  }
+
+  // Get window manager which we wil use for a few jobs here.
+  CEGUI::WindowManager &winMgr = CEGUI::WindowManager::getSingleton();
+
+  // default background empty window
+  CEGUI::Window *background = winMgr.createWindow("DefaultWindow", "UPBGE Root Window");
+  // set area rectangle
+  background->setArea(
+      CEGUI::URect(cegui_reldim(0), cegui_reldim(0), cegui_reldim(1), cegui_reldim(1)));
+  // install this as the root GUI sheet
+  CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(background);
+#endif
+
   m_converter->SetAlwaysUseExpandFraming(GetUseAlwaysExpandFraming());
 
   m_converter->ConvertScene(m_kxStartScene, m_rasterizer, m_canvas, false);
@@ -273,6 +345,12 @@ void LA_Launcher::InitEngine()
 
 void LA_Launcher::ExitEngine()
 {
+
+#ifdef WITH_GAMEENGINE_CEGUI
+  // shutdown CEGUI
+  CEGUI::OpenGL3Renderer::destroySystem();
+#endif
+
 #ifdef WITH_PYTHON
   Texture::FreeAllTextures(nullptr);
 #endif  // WITH_PYTHON
