@@ -28,13 +28,13 @@
  * ***** END GPL LICENSE BLOCK *****
  */
 
-/** \file gameengine/GameLogic/SCA_DelaySensor.cpp
- *  \ingroup gamelogic
- */
+ /** \file gameengine/GameLogic/SCA_DelaySensor.cpp
+  *  \ingroup gamelogic
+  */
 
 #ifdef _MSC_VER
-/* This warning tells us about truncation of __long__ stl-generated names.
- * It can occasionally cause DevStudio to have internal compiler warnings. */
+  /* This warning tells us about truncation of __long__ stl-generated names.
+   * It can occasionally cause DevStudio to have internal compiler warnings. */
 #  pragma warning( disable:4786 )
 #endif
 
@@ -44,19 +44,22 @@
 #include "SCA_LogicManager.h"
 #include "SCA_EventManager.h"
 
-/* ------------------------------------------------------------------------- */
-/* Native functions                                                          */
-/* ------------------------------------------------------------------------- */
+   /* ------------------------------------------------------------------------- */
+   /* Native functions                                                          */
+   /* ------------------------------------------------------------------------- */
 
-SCA_DelaySensor::SCA_DelaySensor(class SCA_EventManager *eventmgr,
-									 SCA_IObject *gameobj,
-									 int delay,
-									 int duration,
-									 bool repeat)
+SCA_DelaySensor::SCA_DelaySensor(class SCA_EventManager* eventmgr,
+	SCA_IObject* gameobj,
+	int delay,
+	int duration,
+	int repeatfor,
+	bool repeat)
 	:SCA_ISensor(gameobj, eventmgr),
 	m_repeat(repeat),
 	m_delay(delay),
-	m_duration(duration)
+	m_duration(duration),
+	m_repeatfor(repeatfor)
+
 {
 	Init();
 }
@@ -73,9 +76,9 @@ SCA_DelaySensor::~SCA_DelaySensor()
 	/* intentionally empty */
 }
 
-EXP_Value *SCA_DelaySensor::GetReplica()
+EXP_Value* SCA_DelaySensor::GetReplica()
 {
-	EXP_Value *replica = new SCA_DelaySensor(*this);
+	EXP_Value* replica = new SCA_DelaySensor(*this);
 	// this will copy properties and so on...
 	replica->ProcessReplica();
 
@@ -115,12 +118,22 @@ bool SCA_DelaySensor::Evaluate()
 			if (m_repeat) {
 				m_frameCount = -1;
 			}
+
+			if (m_repeatfor > 1) {
+				m_frameCount = -1;
+				m_repeatfor -= 1;
+			}
 		}
 	}
 	else {
 		result = true;
 		if (m_repeat) {
 			m_frameCount = -1;
+		}
+
+		if (m_repeatfor > 1) {
+			m_frameCount = -1;
+			m_repeatfor -= 1;
 		}
 	}
 	if ((m_reset && m_level) || result != m_lastResult) {
@@ -130,6 +143,8 @@ bool SCA_DelaySensor::Evaluate()
 	m_lastResult = result;
 	return trigger;
 }
+	
+
 
 #ifdef WITH_PYTHON
 
@@ -165,8 +180,9 @@ PyMethodDef SCA_DelaySensor::Methods[] = {
 };
 
 PyAttributeDef SCA_DelaySensor::Attributes[] = {
-	EXP_PYATTRIBUTE_INT_RW("delay", 0, 100000, true, SCA_DelaySensor, m_delay),
-	EXP_PYATTRIBUTE_INT_RW("duration", 0, 100000, true, SCA_DelaySensor, m_duration),
+	EXP_PYATTRIBUTE_INT_RW("delay", 0, 10000, true, SCA_DelaySensor, m_delay),
+	EXP_PYATTRIBUTE_INT_RW("duration", 0, 10000, true, SCA_DelaySensor, m_duration),
+	EXP_PYATTRIBUTE_INT_RW("repeatTimes", 0, 10000, true, SCA_DelaySensor, m_repeatfor),
 	EXP_PYATTRIBUTE_BOOL_RW("repeat", SCA_DelaySensor, m_repeat),
 	EXP_PYATTRIBUTE_NULL    //Sentinel
 };

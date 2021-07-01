@@ -614,14 +614,14 @@ static void rna_def_delay_sensor(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "delay", PROP_INT, PROP_NONE);
 	RNA_def_property_ui_text(prop, "Delay",
 	                         "Delay in number of logic tics before the positive trigger (default 60 per second)");
-	RNA_def_property_range(prop, 0, 5000);
+	RNA_def_property_range(prop, 0, 10000);
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "duration", PROP_INT, PROP_NONE);
 	RNA_def_property_ui_text(prop, "Duration",
 	                         "If >0, delay in number of logic tics before the negative trigger following "
 	                         "the positive trigger");
-	RNA_def_property_range(prop, 0, 5000);
+	RNA_def_property_range(prop, 0, 10000);
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "use_repeat", PROP_BOOLEAN, PROP_NONE);
@@ -630,7 +630,17 @@ static void rna_def_delay_sensor(BlenderRNA *brna)
 	                         "Toggle repeat option (if selected, the sensor restarts after Delay+Duration "
 	                         "logic tics)");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
+
+	prop = RNA_def_property(srna, "repeat_times", PROP_INT, PROP_NONE);
+	RNA_def_property_ui_text(prop, "Repeat For",
+		"number of times the sensor will act"
+		"");
+	RNA_def_property_range(prop, 0, 10000);
+	RNA_def_property_update(prop, NC_LOGIC, NULL);
+
 }
+
+
 
 static void rna_def_collision_sensor(BlenderRNA *brna)
 {

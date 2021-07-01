@@ -93,7 +93,7 @@ typedef struct bDelaySensor {
 	short delay;
 	short duration;
 	short flag;
-	short pad;
+	short repeat_times;
 } bDelaySensor;
 
 typedef struct bCollisionSensor {
